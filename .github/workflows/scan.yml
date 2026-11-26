@@ -1,0 +1,62 @@
+name: Check eBay and publish
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # GitHub may run it a little late at busy times
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Descriptions already read are kept between runs so each listing is only read once.
+      - name: Restore description cache
+        uses: actions/cache/restore@v4
+        with:
+          path: out/notes.json
+          key: notes-${{ github.run_id }}
+          restore-keys: notes-
+
+      - name: Search eBay
+        env:
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+        run: node scan.js out
+
+      - name: Save description cache
+        uses: actions/cache/save@v4
+        with:
+          path: out/notes.json
+          key: notes-${{ github.run_id }}
+
+      - name: Build site
+        run: |
+          cp site/* out/
+          rm out/notes.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+      - id: deploy
+        uses: actions/deploy-pages@v4

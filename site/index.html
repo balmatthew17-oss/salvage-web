@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salvage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a repair tech's bench sheet – quick to scan, prices first.
+   IDEA: the Android app's dark workbench, widened into a grid.
+   PICTURE: the listings themselves, photo-led cards.
+   COLOUR and TYPE: charcoal ground, mint for deals, amber/red fault tags; Outfit + Inter.
+   LAYOUT: sticky toolbar of tabs, then a responsive card grid. */
+:root{--bg:#151719;--card:#202326;--field:#2a2e32;--line:#30353a;--ink:#f1f2ee;--muted:#9a9e9c;--notes:#c9ccc8;
+  --accent:#5bd6a0;--auction:#7fb8ff;--easy:#5bd6a0;--maybe:#f2b95c;--risky:#f2706a;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+a{color:inherit}
+button,input{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 max(3vw,14px)}
+header{display:flex;align-items:center;gap:12px;padding:22px 0 14px}
+h1{font:700 30px/1.05 Outfit,sans-serif;margin:0}
+.sub{color:var(--muted);font-size:13px;margin-top:3px}
+.sub.err{color:var(--risky)}
+.icon{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);cursor:pointer;display:grid;place-items:center;flex:none}
+.icon:focus-visible,.seg button:focus-visible,.chip:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.icon svg{width:22px;height:22px;fill:var(--ink)}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.seg{display:flex;background:var(--card);border-radius:22px;padding:4px;margin-bottom:8px}
+.seg button{flex:1;border:0;background:none;border-radius:18px;padding:9px 4px;font-weight:600;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg.primary button.on{background:var(--accent);color:var(--bg)}
+.seg.mode button.on{background:#3a3f44;color:var(--ink)}
+.row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;align-items:center}
+.row::-webkit-scrollbar{display:none}
+.chip{border:0;background:var(--card);border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap;flex:none}
+.chip.on{background:var(--accent);color:var(--bg)}
+.chip.sort.on{background:var(--ink);color:var(--bg)}
+.search{flex:1 1 180px;min-width:150px;background:var(--card);border:0;border-radius:20px;padding:8px 14px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px;padding:14px 0 40px}
+.card{background:var(--card);border-radius:18px;padding:12px;display:flex;gap:12px;position:relative}
+.ph{width:104px;height:104px;border-radius:12px;background:var(--field);flex:none;overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.info{flex:1;display:flex;flex-direction:column;gap:2px}
+.title{font-size:14px;text-decoration:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.title:hover{text-decoration:underline}
+.price{font:700 21px/1.2 Outfit,sans-serif;margin-top:3px;white-space:nowrap}
+.price.hot{color:var(--accent)}
+.deal{font:600 11px Inter,sans-serif;background:var(--accent);color:var(--bg);border-radius:8px;padding:2px 7px;vertical-align:3px;margin-left:6px}
+.post,.meta{color:var(--muted);font-size:12.5px}
+.kind{font-size:12.5px;font-weight:600;color:var(--muted)}
+.kind.auc{color:var(--auction)}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tag{font-size:11.5px;border-radius:10px;padding:2px 8px;white-space:nowrap}
+.EASY{color:var(--easy);background:#5bd6a026}.MAYBE{color:var(--maybe);background:#f2b95c26}
+.RISKY{color:var(--risky);background:#f2706a26}.NONE{color:var(--muted);background:#9a9e9c26}
+.notes{margin-top:7px;background:var(--field);border-radius:8px;padding:6px 9px;color:var(--notes);font-size:12.5px}
+.actions{display:flex;gap:8px;margin-top:9px}
+.btn{border:0;border-radius:16px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;background:var(--field)}
+.btn.go{background:var(--accent);color:var(--bg)}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 20px}
+/* settings drawer */
+.veil{position:fixed;inset:0;background:#000a;z-index:20;display:none}
+.veil.open{display:block}
+.panel{position:absolute;right:0;top:0;bottom:0;width:min(460px,100%);background:var(--bg);overflow-y:auto;padding:20px}
+.panel h2{font:700 24px Outfit,sans-serif;margin:0 0 4px}
+.panel h3{color:var(--accent);font-size:13px;margin:22px 0 8px;letter-spacing:.04em}
+.panel p{color:var(--muted);font-size:13px;margin:4px 0 10px}
+.trow{background:var(--card);border-radius:14px;padding:12px;margin-bottom:8px}
+.trow b{display:block;margin-bottom:8px}
+.trow label{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;margin-right:14px}
+.trow label.al{color:var(--accent)}
+.trow input{width:72px;background:var(--field);border:0;border-radius:10px;padding:8px;font-size:16px}
+.ceil{font-size:12px;color:var(--muted);margin-top:6px}
+@media(max-width:600px){h1{font-size:26px}.ph{width:84px;height:84px}.seg button{font-size:12.5px}}
+@media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out both}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div style="flex:1">
+      <h1>Salvage</h1>
+      <div class="sub" id="sub">Loading listings…</div>
+    </div>
+    <button class="icon" id="reload" aria-label="Reload listings"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+    <button class="icon" id="gear" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+  </header>
+  <div class="bar">
+    <div class="seg primary" id="sections"></div>
+    <div class="seg mode" id="modes"></div>
+    <div class="row" id="filters"></div>
+    <div class="row" style="margin-top:8px"><input class="search" id="q" type="search" placeholder="Search titles, e.g. 3080 or hdmi"><span id="sorts" class="row"></span></div>
+  </div>
+  <main class="grid" id="grid"></main>
+</div>
+
+<div class="veil" id="veil">
+  <div class="panel" role="dialog" aria-label="Settings">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h2>Settings</h2><button class="icon" id="close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+    </div>
+    <p>Prices include postage. Listings up to the first price show here; Buy it now listings under the alert price are marked as deals. These are saved in this browser.</p>
+    <div id="types"></div>
+    <h3>HIDDEN LISTINGS</h3>
+    <button class="btn" id="unhide"></button>
+  </div>
+</div>
+
+<script>
+{
+const KINDS = [['CONSOLE','Consoles'],['CONTROLLER','Controllers'],['GPU','GPUs'],['LAPTOP','Laptops']];
+const MODES = [['bin','Buy it now'],['auc','Auctions']];
+const SORTS = {bin:[['new','Newest'],['cheap','Cheapest']], auc:[['end','Ending soon'],['new','Newest'],['cheap','Cheapest']]};
+const NAMES = {ps5:'PS5 (standard / slim)',ps5pro:'PS5 Pro',xsx:'Xbox Series X',xss:'Xbox Series S',ds:'PS5 DualSense',xpad:'Xbox controller',
+  rtx20:'RTX 2060 – 2080',rtx30:'RTX 3050 – 3090',rtx40:'RTX 4060 – 4090',rtx50:'RTX 5060 – 5090',laptop:'Laptops with an RTX GPU'};
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = v => '£' + (v % 1 === 0 ? v : v.toFixed(2));
+const dur = ms => { const m = Math.floor(ms/60000); return m < 1 ? '<1m' : m < 60 ? m+'m' : m < 1440 ? Math.floor(m/60)+'h '+(m%60)+'m' : Math.floor(m/1440)+'d '+Math.floor(m/60)%24+'h'; };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+let data = null, err = null;
+let state = Object.assign({kind:'CONSOLE', mode:'bin', type:null, sort:'new'}, load('salvage-view', {}));
+let prices = load('salvage-prices', {});
+let hidden = new Set(load('salvage-hidden', []));
+
+const $ = id => document.getElementById(id);
+const total = d => d.price + (d.postage || 0);
+const show = k => prices[k]?.show ?? data?.defaults?.[k]?.show ?? 9999;
+const alertAt = k => prices[k]?.alert ?? data?.defaults?.[k]?.alert ?? 0;
+const easyFix = d => d.tags.some(t => t.level === 'EASY' && t.label !== 'Powers on' && t.label !== 'Cosmetic') && d.tags.every(t => t.level === 'EASY');
+const isDeal = d => !d.auction && (total(d) <= alertAt(d.type) || (easyFix(d) && total(d) <= alertAt(d.type) * 1.2));
+const label = d => d.model ? (d.kind === 'LAPTOP' ? d.model + ' laptop' : d.model) : (data.types.find(t => t.key === d.type)?.label || d.type);
+
+function live() {
+  const now = Date.now();
+  return (data?.deals || []).filter(d => !hidden.has(d.id) && total(d) <= show(d.type) && !(d.auction && d.end && d.end < now));
+}
+
+function render() {
+  save('salvage-view', state);
+  const now = Date.now(), all = live();
+  const inKind = all.filter(d => d.kind === state.kind);
+  const inMode = inKind.filter(d => d.auction === (state.mode === 'auc'));
+  const q = $('q').value.trim().toLowerCase();
+  let list = inMode.filter(d => (!state.type || d.type === state.type) && (!q || d.title.toLowerCase().includes(q)));
+  const by = {new:(a,b)=>(b.created||0)-(a.created||0), cheap:(a,b)=>total(a)-total(b), end:(a,b)=>(a.end||9e15)-(b.end||9e15)}[state.sort] || ((a,b)=>0);
+  list.sort(by);
+
+  $('sections').innerHTML = KINDS.map(([k,l]) => `<button class="${state.kind===k?'on':''}" data-kind="${k}">${l}</button>`).join('');
+  $('modes').innerHTML = MODES.map(([m,l]) => `<button class="${state.mode===m?'on':''}" data-mode="${m}">${l} &nbsp;${inKind.filter(d=>d.auction===(m==='auc')).length}</button>`).join('');
+  const types = (data?.types || []).filter(t => t.kind === state.kind);
+  $('filters').innerHTML = types.length > 1 ? [`<button class="chip ${!state.type?'on':''}" data-type="">All ${inMode.length}</button>`]
+    .concat(types.map(t => `<button class="chip ${state.type===t.key?'on':''}" data-type="${esc(t.key)}">${esc(t.label)} ${inMode.filter(d=>d.type===t.key).length}</button>`)).join('') : '';
+  $('filters').style.display = types.length > 1 ? '' : 'none';
+  if (!SORTS[state.mode].some(s => s[0] === state.sort)) state.sort = SORTS[state.mode][0][0];
+  $('sorts').innerHTML = SORTS[state.mode].map(([s,l]) => `<button class="chip sort ${state.sort===s?'on':''}" data-sort="${s}">${l}</button>`).join('');
+
+  if (err && !data) { $('sub').textContent = err; $('sub').className = 'sub err'; }
+  else if (data) {
+    const ago = now - data.updated;
+    $('sub').textContent = `${all.length} listings · eBay checked ${ago < 60000 ? 'just now' : dur(ago) + ' ago'}` + (data.errors?.length ? ' · ' + data.errors[0] : '');
+    $('sub').className = 'sub' + (data.errors?.length ? ' err' : '');
+  }
+
+  $('grid').innerHTML = !data ? `<div class="empty">${esc(err || 'Loading…')}</div>`
+    : list.length ? list.map(card).join('')
+    : `<div class="empty">Nothing here under your prices right now.<br>Check back soon, or raise the limits in Settings.</div>`;
+}
+
+function card(d) {
+  const now = Date.now(), post = d.postage;
+  const kind = d.auction
+    ? `<div class="kind auc">Auction · ${d.bids === 1 ? '1 bid' : d.bids + ' bids'}${d.end ? ' · ' + dur(d.end - now) + ' left' : ''}</div>`
+    : `<div class="kind">Buy it now${d.bestOffer ? ' · offers' : ''}</div>`;
+  const meta = [label(d), d.location, d.created ? 'listed ' + dur(now - d.created) + ' ago' : null].filter(Boolean).map(esc).join(' · ');
+  const tags = d.tags.length ? d.tags.map(t => `<span class="tag ${esc(t.level)}">${esc(t.label)}</span>`).join('') : '<span class="tag NONE">Fault not stated</span>';
+  const deal = isDeal(d);
+  return `<article class="card">
+    <div class="ph">${d.image ? `<img loading="lazy" src="${esc(d.image)}" alt="" onerror="this.remove()">` : ''}</div>
+    <div class="info">
+      <a class="title" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>
+      <div class="price ${deal ? 'hot' : ''}">${money(total(d))}${deal ? '<span class="deal">Deal</span>' : ''}</div>
+      <div class="post">${post == null ? money(d.price) + ' · postage not listed' : post === 0 ? money(d.price) + ' · free postage' : money(d.price) + ' + ' + money(post) + ' post'}</div>
+      ${kind}
+      <div class="meta">${meta}</div>
+      <div class="tags">${tags}</div>
+      ${d.notes ? `<div class="notes">Seller says: “${esc(d.notes)}”</div>` : ''}
+      <div class="actions"><a class="btn go" href="${esc(d.url)}" target="_blank" rel="noopener">View on eBay</a><button class="btn" data-hide="${esc(d.id)}">Hide</button></div>
+    </div>
+  </article>`;
+}
+
+function buildSettings() {
+  if (!data) return;
+  $('types').innerHTML = KINDS.map(([k,l]) => `<h3>${l.toUpperCase()}</h3>` + data.types.filter(t => t.kind === k).map(t => `
+    <div class="trow"><b>${esc(NAMES[t.key] || t.label)}</b>
+      <label>Show up to £<input inputmode="numeric" data-p="${esc(t.key)}" data-f="show" value="${show(t.key)}"></label>
+      <label class="al">Deal under £<input inputmode="numeric" data-p="${esc(t.key)}" data-f="alert" value="${alertAt(t.key)}"></label>
+      <div class="ceil">Search fetches up to £${esc(t.ceiling)} – raise it in config.json for more.</div>
+    </div>`).join('')).join('');
+  $('unhide').textContent = hidden.size ? `Show ${hidden.size} hidden listing${hidden.size === 1 ? '' : 's'} again` : 'No hidden listings';
+}
+
+async function fetchData() {
+  try {
+    const res = await fetch('deals.json?t=' + Date.now());
+    if (!res.ok) throw new Error('No results yet – the first eBay check runs a few minutes after setup.');
+    data = await res.json(); err = null;
+  } catch (e) { err = e.message || 'Could not load listings'; }
+  render();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.kind) { state.kind = b.dataset.kind; state.type = null; render(); }
+  else if (b.dataset.mode) { state.mode = b.dataset.mode; state.sort = SORTS[state.mode][0][0]; render(); }
+  else if (b.dataset.type !== undefined) { state.type = b.dataset.type || null; render(); }
+  else if (b.dataset.sort) { state.sort = b.dataset.sort; render(); }
+  else if (b.dataset.hide) { hidden.add(b.dataset.hide); save('salvage-hidden', [...hidden].slice(-3000)); render(); }
+});
+$('q').addEventListener('input', render);
+$('reload').addEventListener('click', fetchData);
+$('gear').addEventListener('click', () => { buildSettings(); $('veil').classList.add('open'); });
+$('close').addEventListener('click', () => { $('veil').classList.remove('open'); render(); });
+$('veil').addEventListener('click', e => { if (e.target.id === 'veil') { $('veil').classList.remove('open'); render(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('veil').classList.remove('open'); render(); } });
+$('types').addEventListener('input', e => {
+  const i = e.target; if (!i.dataset.p) return;
+  const v = parseInt(i.value, 10);
+  prices[i.dataset.p] = Object.assign({}, prices[i.dataset.p]);
+  if (Number.isFinite(v)) prices[i.dataset.p][i.dataset.f] = v; else delete prices[i.dataset.p][i.dataset.f];
+  save('salvage-prices', prices);
+});
+$('unhide').addEventListener('click', () => { hidden.clear(); save('salvage-hidden', []); buildSettings(); render(); });
+
+fetchData();
+setInterval(fetchData, 5 * 60000);   // new results land every ~15 minutes
+setInterval(render, 30000);          // keep countdowns fresh
+}
+</script>
+</body>
+</html>

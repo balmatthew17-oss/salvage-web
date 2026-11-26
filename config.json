@@ -1,0 +1,75 @@
+{
+  "_help": "ceiling = the most the search will fetch (raise it if you want to set a higher 'show up to' price on the website). defaults = starting show/alert prices on the website. enabled = set one to false to stop searching it.",
+  "ceiling": {
+    "ps5": 250,
+    "ps5pro": 500,
+    "xsx": 220,
+    "xss": 120,
+    "ds": 35,
+    "xpad": 30,
+    "rtx20": 150,
+    "rtx30": 350,
+    "rtx40": 700,
+    "rtx50": 1000,
+    "laptop": 600
+  },
+  "defaults": {
+    "ps5": {
+      "show": 150,
+      "alert": 100
+    },
+    "ps5pro": {
+      "show": 350,
+      "alert": 230
+    },
+    "xsx": {
+      "show": 130,
+      "alert": 90
+    },
+    "xss": {
+      "show": 70,
+      "alert": 45
+    },
+    "ds": {
+      "show": 20,
+      "alert": 12
+    },
+    "xpad": {
+      "show": 15,
+      "alert": 10
+    },
+    "rtx20": {
+      "show": 80,
+      "alert": 45
+    },
+    "rtx30": {
+      "show": 200,
+      "alert": 110
+    },
+    "rtx40": {
+      "show": 450,
+      "alert": 250
+    },
+    "rtx50": {
+      "show": 650,
+      "alert": 380
+    },
+    "laptop": {
+      "show": 350,
+      "alert": 200
+    }
+  },
+  "enabled": {
+    "ps5": true,
+    "ps5pro": true,
+    "xsx": true,
+    "xss": true,
+    "ds": true,
+    "xpad": true,
+    "rtx20": true,
+    "rtx30": true,
+    "rtx40": true,
+    "rtx50": true,
+    "laptop": true
+  }
+}
