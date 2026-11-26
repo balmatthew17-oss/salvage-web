@@ -230,4 +230,15 @@ async function main() {
   errors.forEach(e => console.log('  ' + e));
 }
 
-main().catch(e => { console.error(e.message); process.exit(1); });
+main().catch(e => {
+  // Still publish, so the website can show what went wrong (e.g. missing or rejected keys).
+  console.error(e.message);
+  fs.mkdirSync(OUT, { recursive: true });
+  const prevFile = path.join(OUT, 'deals.json');
+  fs.writeFileSync(prevFile, JSON.stringify({
+    updated: Date.now(),
+    types: TYPES.map(t => ({ key: t.key, label: t.label, kind: t.kind, ceiling: CONFIG.ceiling[t.key] })),
+    defaults: CONFIG.defaults, errors: [e.message], deals: [],
+  }));
+  if (!fs.existsSync(path.join(OUT, 'notes.json'))) fs.writeFileSync(path.join(OUT, 'notes.json'), '{}');
+});
